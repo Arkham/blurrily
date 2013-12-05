@@ -29,6 +29,14 @@ module Blurrily
       nil
     end
 
+    def options
+      @options ||= {}
+    end
+
+    def allow_numeric!
+      options[:allow_numeric] = true
+    end
+
     def self.load(path)
       super(path).tap do |map|
         map.instance_variable_set :@clean_path, path
@@ -39,11 +47,24 @@ module Blurrily
 
     def normalize_string(needle)
       result = needle.downcase
-      unless result =~ /^([a-z ])+$/
-        result = ActiveSupport::Multibyte::Chars.new(result).mb_chars.normalize(:kd).gsub(/[^\x00-\x7F]/,'').to_s.gsub(/[^a-z]/,' ')
-        # result = result.mb_chars.normalize(:kd).gsub(/[^\x00-\x7F]/,'').to_s.gsub(/[^a-z]/,' ')
+
+      unless result =~ /^([#{allowed_characters} ])+$/
+        result = ActiveSupport::Multibyte::Chars.new(result).
+          mb_chars.normalize(:kd).
+          gsub(/[^\x00-\x7F]/,'').to_s.
+          gsub(/[^#{allowed_characters}]/,' ')
       end
-      result.gsub(/\s+/,' ').strip
+
+      result.gsub(/\s+/,' ').tr('0-9', 'a-j').strip
     end
+
+    def allowed_characters
+      if options[:allow_numeric]
+        "a-z0-9"
+      else
+        "a-z"
+      end
+    end
+
   end
 end

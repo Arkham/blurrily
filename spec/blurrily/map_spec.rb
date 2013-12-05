@@ -14,10 +14,9 @@ describe Blurrily::Map do
 
   describe '#stats' do
     let(:result) { subject.stats }
-    
+
     its(:references) { result[:references].should be_a_kind_of(Integer) }
     its(:trigrams)   { result[:trigrams].should be_a_kind_of(Integer) }
-
   end
 
   describe '#put' do
@@ -67,6 +66,18 @@ describe Blurrily::Map do
       subject.put 'london', 123
       subject.save path.to_s
       path.should exist
+    end
+
+    context "allowing numeric fields" do
+      before do
+        subject.allow_numeric!
+      end
+
+      it 'stores numeric references' do
+        subject.put '700845', 123, 0
+        references.should == 1
+        trigrams.should   == 7
+      end
     end
   end
 
@@ -195,8 +206,19 @@ describe Blurrily::Map do
       subject.put 'london', 102, 102
       result.map(&:first).should == [101, 102, 103]
     end
-  end
 
+    context "allowing numeric fields" do
+      before do
+        subject.allow_numeric!
+      end
+
+      it 'returns numeric matches' do
+        needle.replace '105005'
+        subject.put needle, 123, 0
+        result.first.should == [123, 7, 6]
+      end
+    end
+  end
 
   describe '#save' do
 
